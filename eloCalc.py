@@ -4,9 +4,14 @@ import SmashGame
 
 
 
-
-
 def run():
+    '''
+    list of all smash players
+        each entry is a player object that has { name : { game : elo } }
+        so one player can have multiple elo ratings in different games
+    '''
+    players = []
+
     baseUrl = 'https://liquipedia.net'
     metaUrl = 'https://liquipedia.net/smash/Portal:Tournaments/All'
     metaPage = requests.get(metaUrl)
@@ -28,8 +33,10 @@ def run():
         else:
             for game in tab.contents[0]: #switch statement soon pls
                 if game.get_text() == '64':
+                    temp = game.find('a').get('href')
                     n64 = SmashGame.SmashGame(baseUrl + game.find('a').get('href'))
-                    pass
+                    print('n64') # want to see what game is running can remove this later
+                    n64.run()
                 elif game.get_text() == 'Melee':
                     #melee
                     pass
