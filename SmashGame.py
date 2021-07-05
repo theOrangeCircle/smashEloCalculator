@@ -3,9 +3,9 @@ import requests
 import Tournament
 
 class SmashGame():
-    def __init__(self, url):
+    def __init__(self, url, game):
         self.gameTabs = self.findGameTabs(url)
-
+        self.game = game
 
     def findGameTabs(self, url) -> 'list':
         page = requests.get(url)
@@ -23,15 +23,15 @@ class SmashGame():
             gameTabs.insert(0, url)
         return gameTabs
 
-    def run(self) -> None:
+    def run(self, players) -> None:
         for tab in self.gameTabs:
-            self.__run__(tab)
+            self.__run__(tab, players)
 
-    def __run__(self, tab):
+    def __run__(self, tab, players):
         page = requests.get(tab)
         soup = BeautifulSoup(page.content, 'html.parser')
         allTournaments = soup.find_all(class_='divRow')
         for tournament in reversed(allTournaments):
             tournamentUrl = 'https://liquipedia.net' + tournament.find('b').find('a').get('href')
             print(tournamentUrl) # I want to see what is processing - can remove later
-            Tournament.Tournament(tournamentUrl, self)
+            Tournament.Tournament(tournamentUrl, players, self.game) #want to add a run() to tournament

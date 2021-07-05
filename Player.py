@@ -1,18 +1,25 @@
 
 
+'''
+above this: players = { name : Player }
+Player = { name : gamesToElo }  - kinda not necessary? { name : gamesToElo { game : elo }} 
+    so cut out the redundant and unnecessary name in the middle?
+gamesToElo = { game : Elo }   
+so to search one needs a name (to get the player) and a game (to get the elo for a certain game)
+'''
+
+
 class Player():
 
-    #lots of overhead memory for not so many players that swap over - make each on the fly
-    def __init__(self, name):
-        self.name = name
-        self.gamesToElo = []
+    
+    def __init__(self, name, game):
+        self.name = name    # for faster searching down the line -?
+        self.gamesToElo = {}
         self.playerToGame = { name : self.gamesToElo }
+        self.gamesToElo.update( {game : 1500} )
 
-    '''
-    creates a default elo for a given game for a given player
-        game = string name of the game
-        name = string name of the player?
-    '''
-    def addNewGameForPlayer(self, name, game):
-        gameToElo = { game : 1500 }
-        
+    def getFromName(self):
+        return self.gamesToElo
+
+    def getFromGame(self, game):
+        return self.gamesToElo.get(game)
