@@ -65,7 +65,7 @@ class Bracket():
         self.bracketRound(self.loserRounds, players, 1) # need to run loser round now
 
         while self.indices[2] < len(self.fromWhere):    # this might need to be changed
-            if self.findFromWinnersBracket(self.fromWhere[self.indices[2]]):    # change?
+            if self.findFromWinnersBracket(self.fromWhere[self.indices[2]]):    
                 self.bracketRound(self.winnersRounds, players, 0)
                 self.bracketRound(self.loserRounds, players, 1)
                 self.indices[2] += 1
@@ -76,8 +76,9 @@ class Bracket():
         while self.indices[1] < len(self.loserRounds):
             self.bracketRound(self.loserRounds, players, 1)
 
-        for bracket in self.finalRounds:
-            self.bracketRound(bracket)
+        self.quickrun(self.finalRounds, players)
+        # for bracket in self.finalRounds:
+        #     self.quickrun(bracket, players)  # need to make this a quickrun?
 
     
     '''
@@ -192,13 +193,9 @@ class Bracket():
     def containsBracket(self, name):
         return name and 'bracket-column bracket-column-matches' in name
 
-
     def processLoneOtherRounds(self, players):
         for brackets in self.otherRounds:
-            for bracket in brackets:
-                games = bracket.find_all(class_='bracket-game')
-                for game in games:
-                    self.processSet(game, players)
+            self.quickrun(brackets, players)
 
 
     # can maybe move a bit of this into a method - top of processSet
@@ -221,7 +218,7 @@ class Bracket():
     # can also add part of this to another method
     def findAllLoserRoundPlayers(self, loserRound):
         players = set()
-        games = loserRound.find_all('bracket-game')
+        games = loserRound.find_all(class_='bracket-game')
         for game in games:
             topPlayer = game.find(class_='bracket-player-top')
             bottomPlayer = game.find(class_='bracket-player-bottom')
@@ -243,6 +240,18 @@ class Bracket():
         forDe = temp.next_sibling
         forDeC = temp.next_sibling.get('class')
         if forDeC == None: return False # cannot find second half
-        test1 = (forDeC == 'bracket-line-straight')
-        print(temp.next_sibling['class'])
-        return temp.next_sibling['class'][0] == 'bracket-line-straight' # returning false?
+        return temp.next_sibling['class'][0] == 'bracket-line-straight' 
+
+    def condense(self, list):
+        masterList = []
+        for part in list:
+            for bracket in part.find_all(class_=self.containsBracket):
+                masterList.append(bracket)
+        return masterList
+
+
+    def quickrun(self, columns, players):
+        for column in columns:
+            games = column.find_all(class_='bracket-game')
+            for game in games:
+                self.processSet(game, players)
