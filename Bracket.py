@@ -48,6 +48,7 @@ class Bracket():
                 continue
             self.fromWhere.append(part)
 
+    # need to change the fromWhen tests to instead test that all LRX players [list] are found in LRX-1 (set)
     def run(self, players):
         if not self.winnersRounds and self.otherRounds:
             self.processLoneOtherRounds(players)   
@@ -112,12 +113,13 @@ class Bracket():
         topPlayerScore = self.findScore(topPlayer)
         bottomPlayerScore = self.findScore(bottomPlayer)
 
-        self.eloCalc(players, topPlayerName, bottomPlayerName, topPlayerScore, bottomPlayerScore)
+        for scoreA, scoreB in zip(topPlayerScore, bottomPlayerScore):
+            self.eloCalc(players, topPlayerName, bottomPlayerName, [scoreA, scoreB])
 
     
     # add comments
-    def eloCalc(self, players, topName, botName, topScore, botScore):
-        difference = topScore - botScore
+    def eloCalc(self, players, topName, botName, scoreList):
+        difference = scoreList[0] - scoreList[1]
         if difference == 0: return
         if difference < 0: self.updateElo(players, botName, topName, -1 * difference)
         else: self.updateElo(players, topName, botName, difference)
@@ -154,27 +156,27 @@ class Bracket():
         playerData = players.get(name, -1)
         if playerData == -1:
             playerObject = Player.Player(name, game)
-            players.update( {name : playerObject} )
-        # players.get(name, -1).setdefault(game, 1500)    
+            players.update( {name : playerObject} )   
         players.get(name, -1).getFromName().setdefault(game, 1500)
         
-    # add comments  -   need to double check this -- was returning lists earlier
+    # need to return lists for everything in case there is a bracket reset in GF
     def findScore(self, player):
         score = player.find_all(class_='bracket-score')
         scores = []
-        if score[0].text == '': # also for DQ
+        if score[0].text == 'DQ' or score[0].text == 'FF': return [0,0]
+        if score[0].text == '': 
             for child in score[0].descendants:
                 src = child.attrs.get('src')
                 if src == self.GREENCHECK:
-                    return 2    # [2,0]
-            return 0            #[0,0]
+                    return [2,0]    
+            return [0,0]            
         if score is None:
             score = player.find(class_='mobile-only bracket-score')
             if score is not None:
-                return int(score.text)
-            return 0    
+                return [int(score.text), 0]
+            return [0,0] # need to test with a class_='bracket-class-icon'   
         if len(score) == 1:
-            return int(score[0].text)
+            return [int(score[0].text), 0]
         else:       # should never reach here - need to check why I had this earlier
             for i in score:
                 scores.append(int(i.get_text()))
