@@ -33,5 +33,6 @@ class SmashGame():
         allTournaments = soup.find_all(class_='divRow')
         for tournament in reversed(allTournaments):
             tournamentUrl = 'https://liquipedia.net' + tournament.find('b').find('a').get('href')
+            if 'Lima/2012' in tournamentUrl: continue   # TODO much later 
             print(tournamentUrl) # I want to see what is processing - can remove later
             Tournament.Tournament(tournamentUrl, players, self.game) #want to add a run() to tournament

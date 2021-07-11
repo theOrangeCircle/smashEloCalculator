@@ -13,6 +13,7 @@ class Bracket():
         self.game = game
         self.findBracketRounds(url)
 
+    # will need to debug potentially for Lima 
     def findBracketRounds(self, url):
         page = requests.get(url)
         soup = BeautifulSoup(page.content, 'html.parser')
@@ -49,6 +50,7 @@ class Bracket():
             self.fromWhere.append(part)
 
     # need to change the fromWhen tests to instead test that all LRX players [list] are found in LRX-1 (set)
+    # I can remove all the parameters that have self since they are saved
     def run(self, players):
         if not self.winnersRounds and self.otherRounds:
             self.processLoneOtherRounds(players)   
@@ -65,6 +67,7 @@ class Bracket():
 
         self.bracketRound(self.loserRounds, players, 1) # need to run loser round now
 
+        '''
         while self.indices[2] < len(self.fromWhere):    # this might need to be changed
             if self.findFromWinnersBracket(self.fromWhere[self.indices[2]]):    
                 self.bracketRound(self.winnersRounds, players, 0)
@@ -73,13 +76,24 @@ class Bracket():
             else:
                 self.bracketRound(self.loserRounds, players, 1)
                 self.indices[2] += 1
-        
+        '''
+
+        while (self.indices[2] < len(self.fromWhere)) or (self.indices[0] < len(self.winnersRounds)): # need to change - just check for winners or both?
+            if self.allLosersFromBefore(self.indices[1]):
+                # all losers in LRX from LRX-1 so run another LR
+                self.bracketRound(self.loserRounds, players, 1)
+                self.indices[2] += 1
+            else:
+                # need to run WR
+                self.bracketRound(self.winnersRounds, players, 0)
+                self.bracketRound(self.loserRounds, players, 1)
+                self.indices[2] += 1
+
         while self.indices[1] < len(self.loserRounds):
             self.bracketRound(self.loserRounds, players, 1)
 
         self.quickrun(self.finalRounds, players)
-        # for bracket in self.finalRounds:
-        #     self.quickrun(bracket, players)  # need to make this a quickrun?
+        
 
     
     '''
@@ -163,7 +177,10 @@ class Bracket():
     def findScore(self, player):
         score = player.find_all(class_='bracket-score')
         scores = []
-        if score[0].text == 'DQ' or score[0].text == 'FF': return [0,0]
+        if score[0].text == 'DQ' or score[0].text == 'FF' or score[0].text == '-': 
+            return [0,0]
+        elif score[0].text == 'W':
+            return [2,0]
         if score[0].text == '': 
             for child in score[0].descendants:
                 src = child.attrs.get('src')
@@ -216,9 +233,23 @@ class Bracket():
 
         return (topPlayerName, bottomPlayerName)[topPlayerScore > bottomPlayerScore]
 
+    def __findAllLoserRoundPlayersList__(self, loserRound):
+        players = list()
+        games = loserRound.find_all(class_='bracket-game')
+        for game in games:
+            topPlayer = game.find(class_='bracket-player-top')
+            bottomPlayer = game.find(class_='bracket-player-bottom')
 
-    # can also add part of this to another method
-    def findAllLoserRoundPlayers(self, loserRound):
+            if topPlayer: topPlayerName = self.findName(topPlayer)
+            else: return
+            if bottomPlayer: bottomPlayerName = self.findName(bottomPlayer)
+            else: return
+
+            players.append(topPlayerName)
+            players.append(bottomPlayerName)
+        return players
+
+    def __findAllLoserRoundPlayersSet__(self, loserRound):
         players = set()
         games = loserRound.find_all(class_='bracket-game')
         for game in games:
@@ -234,6 +265,9 @@ class Bracket():
             players.add(bottomPlayerName)
         return players
 
+    def findAllLoserRoundPlayers(self, loserRound, listBool=False):
+        if listBool: return self.__findAllLoserRoundPlayersList__(loserRound)
+        else: return self.__findAllLoserRoundPlayersSet__(loserRound)
 
     # might need to change my approach here
     def findFromWinnersBracket(self, column):
@@ -248,7 +282,8 @@ class Bracket():
         masterList = []
         for part in list:
             for bracket in part.find_all(class_=self.containsBracket):
-                masterList.append(bracket)
+                isBracketTrue1 = bracket.find(class_='bracket-player-top')
+                if isBracketTrue1 is not None: masterList.append(bracket)
         return masterList
 
 
@@ -257,3 +292,12 @@ class Bracket():
             games = column.find_all(class_='bracket-game')
             for game in games:
                 self.processSet(game, players)
+
+
+    def allLosersFromBefore(self, index):
+        thisLR = self.findAllLoserRoundPlayers(self.loserRounds[index], True)
+        lastLR = self.findAllLoserRoundPlayers(self.loserRounds[index - 1])
+        for player in thisLR:
+            if player not in lastLR: return False
+        return True
+        
