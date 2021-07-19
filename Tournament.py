@@ -1,12 +1,14 @@
 from bs4 import BeautifulSoup
 import requests
 import Bracket
+import time
 
 
 class Tournament():
 
     
     def __init__(self, url, players, game):
+        time.sleep(3)
         self.game = game
         page = requests.get(url)
         soup = BeautifulSoup(page.content, 'html.parser')

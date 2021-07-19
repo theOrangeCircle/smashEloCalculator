@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import Player
 import math
+import time
 
 
 class Bracket():
@@ -15,6 +16,7 @@ class Bracket():
 
     # will need to debug potentially for Lima 
     def findBracketRounds(self, url):
+        time.sleep(3)
         page = requests.get(url)
         soup = BeautifulSoup(page.content, 'html.parser')
         brackets = soup.find_all(class_='bracket-wrapper bracket-player')

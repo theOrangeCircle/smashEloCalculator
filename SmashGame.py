@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import Tournament
+import time
 
 class SmashGame():
     def __init__(self, url, game):
@@ -28,6 +29,7 @@ class SmashGame():
             self.__run__(tab, players)
 
     def __run__(self, tab, players):
+        time.sleep(3)
         page = requests.get(tab)
         soup = BeautifulSoup(page.content, 'html.parser')
         allTournaments = soup.find_all(class_='divRow')
